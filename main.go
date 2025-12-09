@@ -53,7 +53,7 @@ func main() {
 		log.Fatalln(fmt.Errorf("unsupported project file"))
 	}
 	if outputFilename == "" {
-		outputFilename = m[0] + ".srt"
+		outputFilename = m[0]
 	}
 	if m[1] == "aisp" {
 		isAivis = true
@@ -67,39 +67,43 @@ func main() {
 		}
 	}
 
-	sub, labStr, err := construct.Project2subtitles(projPath, adjustmentNanoSec, isAivis, lab)
+	sublabs, err := construct.Project2subtitles(projPath, adjustmentNanoSec, isAivis, lab)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	f, err := os.OpenFile(outputFilename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	defer f.Close()
-
-	if err := f.Truncate(0); err != nil {
-		log.Fatalln(err)
-	}
-	if _, err := f.Seek(0, 0); err != nil {
-		log.Fatalln(err)
-	}
-	if _, err := f.WriteString(sub.AsSRT()); err != nil {
-		log.Fatalln(err)
-	}
-
-	if lab {
-		f, err = os.OpenFile(outputFilename+".lab", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	for _, sublab := range sublabs {
+		filename := fmt.Sprintf("%s_%s.srt", sublab.SpeakerId, outputFilename)
+		f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
 			log.Fatalln(err)
 		}
+		defer f.Close()
+
 		if err := f.Truncate(0); err != nil {
 			log.Fatalln(err)
 		}
 		if _, err := f.Seek(0, 0); err != nil {
 			log.Fatalln(err)
 		}
-		if _, err := f.WriteString(labStr); err != nil {
+		if _, err := f.WriteString(sublab.Subtitles.AsSRT()); err != nil {
 			log.Fatalln(err)
+		}
+
+		if lab {
+			filename := fmt.Sprintf("%s_%s.lab", sublab.SpeakerId, outputFilename)
+			f, err = os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+			if err != nil {
+				log.Fatalln(err)
+			}
+			if err := f.Truncate(0); err != nil {
+				log.Fatalln(err)
+			}
+			if _, err := f.Seek(0, 0); err != nil {
+				log.Fatalln(err)
+			}
+			if _, err := f.WriteString(sublab.Lab); err != nil {
+				log.Fatalln(err)
+			}
 		}
 	}
 }

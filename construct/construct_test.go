@@ -20,11 +20,15 @@ func TestConstruct(t *testing.T) {
 
 		var proj model.Project
 		json.Unmarshal([]byte(modelVoicevox1), &proj)
-		sub, _, err := generateSubtitles(&proj, testAdjVoicevox, testBoolVoicevox, false)
+		sublabs, err := project2subtitles(&proj, testAdjVoicevox, testBoolVoicevox, true)
 		if err != nil {
 			t.Fatal(err)
 		}
-		cap := sub.Captions[len(sub.Captions)-1]
+		if len(sublabs) != 1 {
+			t.Fatalf("len(sublabs) != 1: %d", len(sublabs))
+		}
+		sublab := sublabs[0]
+		cap := sublab.Subtitles.Captions[len(sublab.Subtitles.Captions)-1]
 		if cap.Seq != 8 {
 			t.Fatalf("cap.Seq != 8: %d", cap.Seq)
 		}
